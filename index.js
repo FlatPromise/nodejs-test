@@ -1,5 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
+const entries_callback = require('./entries_callback');
 
 const app = express();
 const connection = mysql.createConnection({
@@ -39,14 +40,11 @@ app.get('/api/collections/:targetDate', (req, res) => {
         if (last_imei === 0) last_imei = row['IMEI'];
 
         if (last_imei != row['IMEI']) {
-          jsonResult.results[row['IMEI']] = array;
+          jsonResult.results[last_imei] = array;
           array = [];
           last_imei = row['IMEI'];
         }
         array.push(row);
-      });
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
       });
       res.send(jsonResult);
     });
@@ -56,7 +54,9 @@ app.get('/api/collections/:targetDate', (req, res) => {
   }
 });
 
-
+app.get('/api/entries/:targetDate', (req, res) => {
+  entries_callback.getEntries(req, res, connection);
+});
 
 app.get('/', (req, res) => {
   res.send('Hello World');
