@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const entries_callback = require('./entries_callback');
+const collections_callback = require('./collections_callback');
 
 const app = express();
 const connection = mysql.createConnection({
@@ -21,39 +22,7 @@ connection.connect();
 // connection.resume();
 
 app.get('/api/collections/:targetDate', (req, res) => {
-  let jsonResult = { results: {} };
-  jsonResult.targetDate = req.params.targetDate;
-
-  if (/\d{4}-\d{2}/.test(req.params.targetDate)) {
-    jsonResult.targetDate = req.params.targetDate;
-    let sqlQuery = `SELECT * FROM collection_reports_tb 
-                    WHERE entry_date LIKE '${req.params.targetDate}%' 
-                    ORDER BY IMEI,print_series`;
-
-    let last_imei = 0;
-    let array = [];
-    connection.query(sqlQuery, (err, rows, fields) => {
-      // jsonResult.results = rows;
-      // res.send(jsonResult);
-
-      rows.forEach((row, index, this_array) => {
-        if (last_imei === 0) last_imei = row['IMEI'];
-
-        if (last_imei != row['IMEI']) {
-          jsonResult.results[last_imei] = array;
-          array = [];
-          last_imei = row['IMEI'];
-        } else if (index === this_array.length - 1) {
-          jsonResult.results[last_imei] = array;
-        }
-        array.push(row);
-      });
-      res.send(jsonResult);
-    });
-  } else {
-    jsonResult.error = 'bad date input';
-    res.send(jsonResult);
-  }
+  collections_callback.getCollections(req, res, connection);
 });
 
 app.get('/api/entries/:targetDate', (req, res) => {
