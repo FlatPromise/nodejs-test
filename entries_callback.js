@@ -23,13 +23,15 @@ async function getEntries(req, res, sql) {
       await new Promise((resolve, reject) => {
         let last_MIN = 0;
         let array = [];
-        results.forEach((row) => {
+        results.forEach((row, index, this_array) => {
           if (last_MIN === 0) last_MIN = row['MIN'];
 
           if (last_MIN != row['MIN']) {
             jsonResult.results[last_MIN] = array;
             array = [];
             last_MIN = row['MIN'];
+          } else if (index === this_array.length - 1) {
+            jsonResult.results[last_MIN] = array;
           }
           array.push(row);
         });

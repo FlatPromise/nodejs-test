@@ -36,13 +36,15 @@ app.get('/api/collections/:targetDate', (req, res) => {
       // jsonResult.results = rows;
       // res.send(jsonResult);
 
-      rows.forEach((row) => {
+      rows.forEach((row, index, this_array) => {
         if (last_imei === 0) last_imei = row['IMEI'];
 
         if (last_imei != row['IMEI']) {
           jsonResult.results[last_imei] = array;
           array = [];
           last_imei = row['IMEI'];
+        } else if (index === this_array.length - 1) {
+          jsonResult.results[last_imei] = array;
         }
         array.push(row);
       });
