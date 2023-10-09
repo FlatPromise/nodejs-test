@@ -1,3 +1,4 @@
+const fetch = require('node-fetch');
 const express = require('express');
 const mysql = require('mysql');
 const entries_callback = require('./entries_callback');
@@ -23,6 +24,16 @@ connection.connect();
 
 app.get('/api/collections/:targetDate', (req, res) => {
   collections_callback.getCollections(req, res, connection);
+});
+
+app.get('/api/collections/:targetDate/missing', async (req, res) => {
+  // const fetchResult = await fetch(
+  //   `http://localhost:3000/api/collections/${req.params.targetDate}`,
+  // );
+
+  fetch(`http://localhost:3000/api/collections/${req.params.targetDate}`)
+    .then((res) => res.text())
+    .then((text) => console.log(text));
 });
 
 app.get('/api/entries/:targetDate', (req, res) => {
