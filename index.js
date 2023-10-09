@@ -27,13 +27,8 @@ app.get('/api/collections/:targetDate', (req, res) => {
 });
 
 app.get('/api/collections/:targetDate/missing', async (req, res) => {
-  // const fetchResult = await fetch(
-  //   `http://localhost:3000/api/collections/${req.params.targetDate}`,
-  // );
-
-  fetch(`http://localhost:3000/api/collections/${req.params.targetDate}`)
-    .then((res) => res.text())
-    .then((text) => console.log(text));
+  collections_callback.getMissing(req, res, connection);
+  res.send('A-OK');
 });
 
 app.get('/api/entries/:targetDate', (req, res) => {

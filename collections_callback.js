@@ -1,3 +1,5 @@
+const fetch = require('node-fetch');
+
 async function getCollections(req, res, sql) {
   let jsonResult = { results: {} };
   jsonResult.targetDate = req.params.targetDate;
@@ -43,8 +45,15 @@ async function getCollections(req, res, sql) {
   }
 }
 
-async function getMissing(req, res, sql) {}
+async function getMissing(req, res, sql) {
+  let response = await fetch(
+    `http://localhost:3000/api/collections/${req.params.targetDate}`,
+  );
+  let receivedJson = await response.json();
+  console.log(receivedJson);
+}
 
 module.exports = {
   getCollections,
+  getMissing,
 };
