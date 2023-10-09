@@ -32,16 +32,18 @@ async function getCollections(req, res, sql) {
           array.push(row);
         });
         resolve(jsonResult);
-        res.send(jsonResult);
+        res.send(JSON.stringify(jsonResult));
       });
     } catch (error) {
       console.log(error);
     }
   } else {
     jsonResult.error = 'bad date';
-    res.send(jsonResult);
+    res.send(JSON.stringify(jsonResult));
   }
 }
+
+async function getMissing(req, res, sql) {}
 
 module.exports = {
   getCollections,
