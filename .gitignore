@@ -1,2 +1,3 @@
 node_modules/**
 .vscode/**
+php_controllers_to_reference/**
