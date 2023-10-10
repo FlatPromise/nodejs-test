@@ -203,9 +203,18 @@ async function verifyMissing(req, res, sql) {
     transactionIMEI[transact['IMEI']].push(transact);
   });
 
-  res.write(`<p>${entriesResults}</p>`);
-  res.write(`<p>${transactionResults}</p>`);
-  res.end();
+  console.log('MISSING DATA IMEIs');
+  console.log('-------------------------------------------');
+  for (const current_IMEI in receivedMissing.results) {
+    console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
+  }
+
+  console.log('ENTRIES DATA IMEIs');
+  console.log('-------------------------------------------');
+  for (const current_IMEI in entriesIMEI) {
+    console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
+  }
+  res.send('A-OK');
 }
 
 module.exports = {
