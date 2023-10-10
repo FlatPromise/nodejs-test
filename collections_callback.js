@@ -87,6 +87,15 @@ async function getMissing(req, res) {
 }
 
 async function verifyMissing(req, res, sql) {
+  const response = await fetch(
+    `http://${req.headers.host}/api/collections/${req.params.targetDate}/missing`,
+  );
+  const receivedMissing = await response.json();
+
+  if (receivedMissing.hasOwnProperty('error')) {
+    return res.send(JSON.stringify(receivedMissing));
+  }
+
   // selectCollectSQL = `SELECT crt.IMEI,
   //                      rut.MIN,
   //                      crt.print_series,
