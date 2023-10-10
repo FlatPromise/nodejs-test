@@ -164,6 +164,8 @@ async function verifyMissing(req, res, sql) {
     });
   });
 
+  // TODO: ORGANIZE ENTRIES BY MIN/IMEI
+
   selectTransactionsSQL = `SELECT tlt.IMEI,
                                   rut.MIN,
                                   tlt.print_series,
@@ -188,6 +190,8 @@ async function verifyMissing(req, res, sql) {
       resolve(rows);
     });
   });
+
+  // TODO: ORGANIZE ENTRIES BY MIN/IMEI
 
   res.write(`<p>${entriesResults}</p>`);
   res.write(`<p>${transactionResults}</p>`);
