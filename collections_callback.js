@@ -46,7 +46,7 @@ async function getCollections(req, res, sql) {
   }
 }
 
-async function getMissing(req, res, sql) {
+async function getMissing(req, res) {
   let response = await fetch(
     `http://${req.headers.host}/api/collections/${req.params.targetDate}`,
   );

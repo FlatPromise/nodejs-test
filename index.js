@@ -27,7 +27,7 @@ app.get('/api/collections/:targetDate', (req, res) => {
 });
 
 app.get('/api/collections/:targetDate/missing', (req, res) => {
-  collections_callback.getMissing(req, res, connection);
+  collections_callback.getMissing(req, res);
 });
 
 app.get('/api/entries/:targetDate', (req, res) => {
