@@ -68,7 +68,14 @@ async function getMissing(req, res) {
       if (expectedPrintSeries != element['print_series']) {
         let missingStart = expectedPrintSeries;
         let missingEnd = element['print_series'] - 1;
-        missingArray.push([missingStart, missingEnd]);
+
+        if (missingStart === missingEnd) missingArray.push(missingStart);
+        else {
+          for (let i = missingStart; i <= missingEnd; i++) {
+            missingArray.push(i);
+          }
+        }
+
         expectedPrintSeries = element['print_series'];
       }
 
