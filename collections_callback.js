@@ -119,23 +119,79 @@ async function verifyMissing(req, res, sql) {
                        AND print_series > 0
                       ORDER BY crt.IMEI, crt.print_series`;
   const collectResults = await new Promise((resolve, reject) => {
-    sql.query(selectCollectSQL, (err, rows, fields) => {
+    sql.query(selectCollectSQL, async (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(
+        await new Promise((resolve, reject) => {
+          let refUnitsTbl = {};
+          rows.forEach((element) => {
+            refUnitsTbl[element['IMEI']] = element['MIN'];
+          });
+          resolve(refUnitsTbl);
+        }),
+      );
+    });
+  });
+
+  // used for SQL querying for `in` condition
+  let inStringIMEI = Object.keys(collectResults).join(',');
+  let inStringMIN = Object.values(collectResults).join(',');
+
+  // res.send(JSON.stringify(refUnitsTbl));
+  // res.send(JSON.stringify(receivedMissing));
+
+  selectEntriesSQL = `SELECT rut.IMEI,
+                             et.MIN,
+                             et.print_series,
+                             et.start_date,
+                             rtt.vatable_sales,
+                             rtt.vat_amount,
+                             rtt.vat_exempt,
+                             rtt.zero_rated,
+                             rtt.effective_from,
+                             rtt.effective_to
+                      FROM entries_tb et
+                      LEFT JOIN ref_ticket_types_tb rtt ON rtt.ticket_id = et.ticket_type
+                      LEFT JOIN ref_units_tb rut ON rut.MIN = et.MIN
+                      WHERE et.MIN IN (${inStringMIN})
+                       AND et.start_date LIKE '${req.params.targetDate}%'
+                       AND et.print_series > 0
+                      ORDER BY et.MIN, et.print_series`;
+  const entriesResults = await new Promise((resolve, reject) => {
+    sql.query(selectEntriesSQL, (err, rows, fields) => {
       if (err) reject(err);
       resolve(rows);
     });
   });
 
-  let refUnitsTbl = {};
-  collectResults.forEach((element) => {
-    refUnitsTbl[element['IMEI']] = element['MIN'];
+  selectTransactionsSQL = `SELECT tlt.IMEI,
+                                  rut.MIN,
+                                  tlt.print_series,
+                                  tlt.datetime,
+                                  rtt.total_amount,
+                                  rtt.vatable_sales,
+                                  rtt.vat_amount,
+                                  rtt.vat_exempt,
+                                  rtt.zero_rated,
+                                  rtt.effective_from,
+                                  rtt.effective_to
+                            FROM transaction_logs_tb tlt
+                            LEFT JOIN ref_ticket_types_tb rtt ON rtt.ticket_id = tlt.ticket_type
+                            LEFT JOIN ref_units_tb rut ON rut.IMEI = tlt.IMEI
+                            WHERE rut.MIN IN (${inStringMIN})
+                             AND tlt.datetime LIKE '${req.params.targetDate}%'
+                             AND tlt.print_series > 0
+                            ORDER BY rut.MIN, tlt.print_series`;
+  const transactionResults = await new Promise((resolve, reject) => {
+    sql.query(selectTransactionsSQL, (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
   });
-  // used for SQL querying for `in` condition
-  let inStringIMEI = Object.keys(refUnitsTbl).join(',');
-  let inStringMIN = Object.values(refUnitsTbl).join(',');
 
-  res.send(refUnitsTbl);
-  selectEntriesSQL = ``;
-  selectTransactionsSQL = ``;
+  res.write(`<p>${entriesResults}</p>`);
+  res.write(`<p>${transactionResults}</p>`);
+  res.end();
 }
 
 module.exports = {
