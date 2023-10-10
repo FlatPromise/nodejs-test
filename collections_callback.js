@@ -164,7 +164,12 @@ async function verifyMissing(req, res, sql) {
     });
   });
 
-  // TODO: ORGANIZE ENTRIES BY MIN/IMEI
+  let entriesIMEI = {};
+  entriesResults.forEach((entry) => {
+    if (typeof entriesIMEI[entry['IMEI']] === 'undefined')
+      entriesIMEI[entry['IMEI']] = [];
+    entriesIMEI[entry['IMEI']].push(entry);
+  });
 
   selectTransactionsSQL = `SELECT tlt.IMEI,
                                   rut.MIN,
@@ -191,7 +196,12 @@ async function verifyMissing(req, res, sql) {
     });
   });
 
-  // TODO: ORGANIZE ENTRIES BY MIN/IMEI
+  let transactionIMEI = {};
+  transactionResults.forEach((transact) => {
+    if (typeof transactionIMEI[transact['IMEI']] === 'undefined')
+      transactionIMEI[transact['IMEI']] = [];
+    transactionIMEI[transact['IMEI']].push(transact);
+  });
 
   res.write(`<p>${entriesResults}</p>`);
   res.write(`<p>${transactionResults}</p>`);
