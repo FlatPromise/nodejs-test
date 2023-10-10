@@ -1,3 +1,4 @@
+const { json } = require('express');
 const fetch = require('node-fetch');
 
 async function getCollections(req, res, sql) {
@@ -47,10 +48,35 @@ async function getCollections(req, res, sql) {
 
 async function getMissing(req, res, sql) {
   let response = await fetch(
-    `http://localhost:3000/api/collections/${req.params.targetDate}`,
+    `http://${req.headers.host}/api/collections/${req.params.targetDate}`,
   );
   let receivedJson = await response.json();
-  console.log(receivedJson);
+
+  if (receivedJson.hasOwnProperty('error')) {
+    return res.send(JSON.stringify(receivedJson));
+  }
+
+  let jsonResult = { targetDate: receivedJson.targetDate, results: {} };
+
+  for (const current_imei in receivedJson.results) {
+    let current_imei_block = receivedJson.results[current_imei];
+    let expectedPrintSeries = 0;
+    let missingArray = [];
+    current_imei_block.forEach((element, index) => {
+      expectedPrintSeries++;
+
+      if (expectedPrintSeries != element['print_series']) {
+        let missingStart = expectedPrintSeries;
+        let missingEnd = element['print_series'] - 1;
+        missingArray.push([missingStart, missingEnd]);
+        expectedPrintSeries = element['print_series'];
+      }
+
+      if (index === current_imei_block.length - 1 && missingArray.length > 0)
+        jsonResult.results[element['IMEI']] = missingArray;
+    });
+  }
+  res.send(JSON.stringify(jsonResult));
 }
 
 module.exports = {

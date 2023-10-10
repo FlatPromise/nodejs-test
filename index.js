@@ -26,9 +26,8 @@ app.get('/api/collections/:targetDate', (req, res) => {
   collections_callback.getCollections(req, res, connection);
 });
 
-app.get('/api/collections/:targetDate/missing', async (req, res) => {
+app.get('/api/collections/:targetDate/missing', (req, res) => {
   collections_callback.getMissing(req, res, connection);
-  res.send('A-OK');
 });
 
 app.get('/api/entries/:targetDate', (req, res) => {
