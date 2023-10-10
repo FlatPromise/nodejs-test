@@ -30,6 +30,10 @@ app.get('/api/collections/:targetDate/missing', (req, res) => {
   collections_callback.getMissing(req, res);
 });
 
+app.get('/api/collections/:targetDate/missing/verify', (req, res) => {
+  res.send('Hello World');
+});
+
 app.get('/api/entries/:targetDate', (req, res) => {
   entries_callback.getEntries(req, res, connection);
 });

@@ -86,7 +86,10 @@ async function getMissing(req, res) {
   res.send(JSON.stringify(jsonResult));
 }
 
+async function verifyMissing(req, res, sql) {}
+
 module.exports = {
   getCollections,
   getMissing,
+  verifyMissing,
 };
