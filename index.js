@@ -34,6 +34,10 @@ app.get('/api/entries/:targetDate', (req, res) => {
   entries_callback.getEntries(req, res, connection);
 });
 
+app.get('/api/entries/:targetDate/missing', (req, res) => {
+  entries_callback.getMissing(req, res);
+});
+
 app.get('/', (req, res) => {
   res.send('Hello World');
 });

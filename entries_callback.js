@@ -9,7 +9,8 @@ async function getEntries(req, res, sql) {
                            start_date,
                            print_series
                     FROM entries_tb 
-                    WHERE start_date LIKE '${req.params.targetDate}%' 
+                    WHERE start_date LIKE '${req.params.targetDate}%'
+                     AND print_series > 0 
                     ORDER BY MIN,print_series`;
 
     try {
@@ -47,6 +48,45 @@ async function getEntries(req, res, sql) {
   }
 }
 
+async function getMissing(req, res) {
+  let response = await fetch(
+    `http://${req.headers.host}/api/entries/${req.params.targetDate}`,
+  );
+  let receivedJson = await response.json();
+
+  if (receivedJson.hasOwnProperty('error')) {
+    return res.send(JSON.stringify(receivedJson));
+  }
+
+  let jsonResult = { targetDate: receivedJson.targetDate, results: {} };
+
+  for (const current_min in receivedJson.results) {
+    let current_min_block = receivedJson.results[current_min];
+    let expectedPrintSeries = 0;
+    let missingArray = [];
+
+    current_min_block.forEach((element, index) => {
+      expectedPrintSeries++;
+
+      if (expectedPrintSeries - 1 === element['print_series'])
+        expectedPrintSeries = element['print_series'];
+      else if (expectedPrintSeries != element['print_series']) {
+        let missingStart = expectedPrintSeries;
+        let missingEnd = element['print_series'] - 1;
+
+        missingArray.push([missingStart, missingEnd]);
+        expectedPrintSeries = element['print_series'];
+      }
+
+      if (index === current_min_block.length - 1 && missingArray.length > 0) {
+        jsonResult.results[element['MIN']] = missingArray;
+      }
+    });
+  }
+  res.send(JSON.stringify(jsonResult));
+}
+
 module.exports = {
   getEntries,
+  getMissing,
 };
