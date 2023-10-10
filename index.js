@@ -31,7 +31,7 @@ app.get('/api/collections/:targetDate/missing', (req, res) => {
 });
 
 app.get('/api/collections/:targetDate/missing/verify', (req, res) => {
-  res.send('Hello World');
+  collections_callback.verifyMissing(req, res, connection);
 });
 
 app.get('/api/entries/:targetDate', (req, res) => {
