@@ -188,19 +188,19 @@ async function verifyMissing(req, res, sql) {
                              AND tlt.datetime LIKE '${req.params.targetDate}%'
                              AND tlt.print_series > 0
                             ORDER BY rut.MIN, tlt.print_series`;
-  // const transactionResults = await new Promise((resolve, reject) => {
-  //   sql.query(selectTransactionsSQL, (err, rows, fields) => {
-  //     if (err) reject(err);
-  //     resolve(rows);
-  //   });
-  // });
+  const transactionResults = await new Promise((resolve, reject) => {
+    sql.query(selectTransactionsSQL, (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
 
-  // let transactionIMEI = {};
-  // transactionResults.forEach((transact) => {
-  //   if (typeof transactionIMEI[transact['IMEI']] === 'undefined')
-  //     transactionIMEI[transact['IMEI']] = [];
-  //   transactionIMEI[transact['IMEI']].push(transact);
-  // });
+  let transactionIMEI = {};
+  transactionResults.forEach((transact) => {
+    if (typeof transactionIMEI[transact['IMEI']] === 'undefined')
+      transactionIMEI[transact['IMEI']] = [];
+    transactionIMEI[transact['IMEI']].push(transact);
+  });
 
   let rawData = {
     targetDate: req.params.targetDate,
@@ -221,7 +221,7 @@ async function verifyMissing(req, res, sql) {
               entriesIMEI[current_collect_IMEI][i].print_series;
             if (entry_print_series > collect_print_series) {
               //if not found, push to remainingToSearch to search in Transact
-              //push to jsonResults noData for now for checking
+              //push to rawData noData for now for checking
               if (!Array.isArray(rawData.results.noData[current_collect_IMEI]))
                 rawData.results.noData[current_collect_IMEI] = [];
               rawData.results.noData[current_collect_IMEI].push(
@@ -230,9 +230,9 @@ async function verifyMissing(req, res, sql) {
               // remainingToSearch.push(collect_print_series);
               break;
             }
-            //if found in entries, push to found in entries in jsonResult
+            //if found in entries, push to found in entries in rawData
             if (entry_print_series === collect_print_series) {
-              // create array in jsonResult according to IMEI and push there
+              // create array in rawData according to IMEI and push there
               if (
                 !Array.isArray(rawData.results.inEntries[current_collect_IMEI])
               )
@@ -245,8 +245,46 @@ async function verifyMissing(req, res, sql) {
           }
         } else {
           // check if transacts[] exists
-          // and search in transacts[] immediately if it doesn't exist.
-          console.log('NO ENTRIES[] FOUND');
+          if (Array.isArray(transactionIMEI[current_collect_IMEI])) {
+            for (
+              let i = 0;
+              i <= transactionIMEI[current_collect_IMEI].length;
+              i++
+            ) {
+              let transaction_print_series =
+                transactionIMEI[current_collect_IMEI][i].print_series;
+              if (transaction_print_series > collect_print_series) {
+                //if not found, data missing
+                if (
+                  !Array.isArray(rawData.results.noData[current_collect_IMEI])
+                )
+                  rawData.results.noData[current_collect_IMEI] = [];
+                rawData.results.noData[current_collect_IMEI].push(
+                  collect_print_series,
+                );
+                break;
+              }
+
+              //if found in transaction, push to found in transaction in rawData
+              if (transaction_print_series === collect_print_series) {
+                // create array in rawData according to IMEI and push there
+                if (
+                  !Array.isArray(
+                    rawData.results.inTransact[current_collect_IMEI],
+                  )
+                )
+                  rawData.results.inTransact[current_collect_IMEI] = [];
+                rawData.results.inTransact[current_collect_IMEI].push(
+                  collect_print_series,
+                );
+                break;
+              }
+            }
+          }
+          //if it doesn't exist all items are missing
+          else {
+            console.log('went here: none in transact and entries');
+          }
         }
       },
     );
