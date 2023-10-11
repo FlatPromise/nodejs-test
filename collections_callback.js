@@ -294,15 +294,51 @@ async function verifyMissing(req, res, sql) {
       remainingToSearch.length > 0 &&
       Array.isArray(transactionIMEI[current_collect_IMEI])
     ) {
-      console.log(remainingToSearch.length);
+      remainingToSearch.forEach((collect_print_series) => {
+        if (Array.isArray(transactionIMEI[current_collect_IMEI])) {
+          for (
+            let i = 0;
+            i <= transactionIMEI[current_collect_IMEI].length;
+            i++
+          ) {
+            let transaction_print_series =
+              transactionIMEI[current_collect_IMEI][i].print_series;
+            if (transaction_print_series > collect_print_series) {
+              //if not found, data missing
+              if (!Array.isArray(rawData.results.noData[current_collect_IMEI]))
+                rawData.results.noData[current_collect_IMEI] = [];
+              rawData.results.noData[current_collect_IMEI].push(
+                collect_print_series,
+              );
+              break;
+            }
+
+            //if found in transaction, push to found in transaction in rawData
+            if (transaction_print_series === collect_print_series) {
+              // create array in rawData according to IMEI and push there
+              if (
+                !Array.isArray(rawData.results.inTransact[current_collect_IMEI])
+              )
+                rawData.results.inTransact[current_collect_IMEI] = [];
+              rawData.results.inTransact[current_collect_IMEI].push(
+                collect_print_series,
+              );
+              break;
+            }
+          }
+        }
+      });
+    }
+    //else, all remaining to search are missing
+    else {
+      remainingToSearch.forEach((collect_print_series) => {
+        //due to the nature of the foreach, will iterate this every time
+        if (!Array.isArray(rawData.results.noData[current_collect_IMEI]))
+          rawData.results.noData[current_collect_IMEI] = [];
+        rawData.results.noData[current_collect_IMEI].push(collect_print_series);
+      });
     }
   }
-
-  // console.log('ENTRIES DATA IMEIs');
-  // console.log('-------------------------------------------');
-  // for (const current_IMEI in entriesIMEI) {
-  //   console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
-  // }
   res.send(JSON.stringify(rawData));
 }
 
