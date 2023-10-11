@@ -95,20 +95,6 @@ async function verifyMissing(req, res, sql) {
     return res.send(JSON.stringify(receivedMissing));
   }
 
-  // selectCollectSQL = `SELECT crt.IMEI,
-  //                      rut.MIN,
-  //                      crt.print_series,
-  //                      crt.entry_date,
-  //                      crt.total_amount,
-  //                      crt.vatable_sales,
-  //                      crt.vat_amount,
-  //                      crt.vat_exempt,
-  //                      crt.zero_rated
-  //                     FROM collection_reports_tb crt
-  //                     LEFT JOIN ref_units_tb rut ON rut.IMEI = crt.IMEI
-  //                     WHERE entry_date LIKE '${req.params.targetDate}%'
-  //                      AND print_series > 0
-  //                     ORDER BY crt.IMEI, crt.print_series`;
   selectCollectSQL = `SELECT  DISTINCT
                        crt.IMEI,
                        rut.MIN
