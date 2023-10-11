@@ -208,6 +208,7 @@ async function verifyMissing(req, res, sql) {
   };
 
   for (const current_collect_IMEI in receivedMissing.results) {
+    let remainingToSearch = [];
     // receivedMissing.results[357...] = [1,2,3,...]
     receivedMissing.results[current_collect_IMEI].forEach(
       (collect_print_series) => {
@@ -215,7 +216,6 @@ async function verifyMissing(req, res, sql) {
 
         if (Array.isArray(entriesIMEI[current_collect_IMEI])) {
           //check if found in entries
-          let remainingToSearch = [];
           for (let i = 0; i <= entriesIMEI[current_collect_IMEI].length; i++) {
             let entry_print_series =
               entriesIMEI[current_collect_IMEI][i].print_series;
