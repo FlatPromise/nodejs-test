@@ -156,19 +156,19 @@ async function verifyMissing(req, res, sql) {
                        AND et.start_date LIKE '${req.params.targetDate}%'
                        AND et.print_series > 0
                       ORDER BY et.MIN, et.print_series`;
-  const entriesResults = await new Promise((resolve, reject) => {
-    sql.query(selectEntriesSQL, (err, rows, fields) => {
-      if (err) reject(err);
-      resolve(rows);
-    });
-  });
+  // const entriesResults = await new Promise((resolve, reject) => {
+  //   sql.query(selectEntriesSQL, (err, rows, fields) => {
+  //     if (err) reject(err);
+  //     resolve(rows);
+  //   });
+  // });
 
   let entriesIMEI = {};
-  entriesResults.forEach((entry) => {
-    if (typeof entriesIMEI[entry['IMEI']] === 'undefined')
-      entriesIMEI[entry['IMEI']] = [];
-    entriesIMEI[entry['IMEI']].push(entry);
-  });
+  // entriesResults.forEach((entry) => {
+  //   if (typeof entriesIMEI[entry['IMEI']] === 'undefined')
+  //     entriesIMEI[entry['IMEI']] = [];
+  //   entriesIMEI[entry['IMEI']].push(entry);
+  // });
 
   selectTransactionsSQL = `SELECT tlt.IMEI,
                                   rut.MIN,
@@ -283,7 +283,12 @@ async function verifyMissing(req, res, sql) {
           }
           //if it doesn't exist all items are missing
           else {
-            console.log('went here: none in transact and entries');
+            //due to the nature of the foreach, will iterate this every time
+            if (!Array.isArray(rawData.results.noData[current_collect_IMEI]))
+              rawData.results.noData[current_collect_IMEI] = [];
+            rawData.results.noData[current_collect_IMEI].push(
+              collect_print_series,
+            );
           }
         }
       },
