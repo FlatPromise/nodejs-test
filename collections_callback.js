@@ -203,17 +203,54 @@ async function verifyMissing(req, res, sql) {
     transactionIMEI[transact['IMEI']].push(transact);
   });
 
-  console.log('MISSING DATA IMEIs');
-  console.log('-------------------------------------------');
-  for (const current_IMEI in receivedMissing.results) {
-    console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
+  let jsonResult = {
+    targetDate: req.params.targetDate,
+    results: { inTransact: {}, inEntries: {}, noData: {} },
+  };
+
+  for (const current_collect_IMEI in receivedMissing.results) {
+    // receivedMissing.results[357...] = [1,2,3,...]
+    receivedMissing.results[current_collect_IMEI].forEach(
+      (collect_print_series) => {
+        // if entries[] exists, search there first.
+        if (Array.isArray(entriesIMEI[current_collect_IMEI])) {
+          let remainingToSearch = [];
+
+          entriesIMEI[current_collect_IMEI].forEach((entry) => {
+            let entry_print_series = entry['print_series'];
+
+            if (entry_print_series > collect_print_series)
+              remainingToSearch.push(collect_print_series);
+
+            if (entry_print_series === collect_print_series) {
+              // if array doesn't exist yet, create an array first then push
+              if (
+                !Array.isArray(
+                  jsonResult.results.inEntries[current_collect_IMEI],
+                )
+              ) {
+                jsonResult.results.inEntries[current_collect_IMEI] = [];
+              }
+              // then push here
+              jsonResult.results.inEntries[current_collect_IMEI].push(
+                collect_print_series,
+              );
+            }
+          });
+        } else {
+          // check if transacts[] exists
+          // and search in transacts[] immediately if it doesn't exist.
+          console.log('NO ENTRIES[] FOUND');
+        }
+      },
+    );
   }
 
-  console.log('ENTRIES DATA IMEIs');
-  console.log('-------------------------------------------');
-  for (const current_IMEI in entriesIMEI) {
-    console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
-  }
+  // console.log('ENTRIES DATA IMEIs');
+  // console.log('-------------------------------------------');
+  // for (const current_IMEI in entriesIMEI) {
+  //   console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
+  // }
   res.send('A-OK');
 }
 
