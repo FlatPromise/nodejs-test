@@ -213,9 +213,9 @@ async function verifyMissing(req, res, sql) {
       (collect_print_series) => {
         // if entries[] exists, search there first.
 
-        let remainingToSearch = [];
         if (Array.isArray(entriesIMEI[current_collect_IMEI])) {
           //check if found in entries
+          let remainingToSearch = [];
           for (let i = 0; i <= entriesIMEI[current_collect_IMEI].length; i++) {
             let entry_print_series =
               entriesIMEI[current_collect_IMEI][i].print_series;
