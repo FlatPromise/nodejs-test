@@ -156,19 +156,19 @@ async function verifyMissing(req, res, sql) {
                        AND et.start_date LIKE '${req.params.targetDate}%'
                        AND et.print_series > 0
                       ORDER BY et.MIN, et.print_series`;
-  // const entriesResults = await new Promise((resolve, reject) => {
-  //   sql.query(selectEntriesSQL, (err, rows, fields) => {
-  //     if (err) reject(err);
-  //     resolve(rows);
-  //   });
-  // });
+  const entriesResults = await new Promise((resolve, reject) => {
+    sql.query(selectEntriesSQL, (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
 
   let entriesIMEI = {};
-  // entriesResults.forEach((entry) => {
-  //   if (typeof entriesIMEI[entry['IMEI']] === 'undefined')
-  //     entriesIMEI[entry['IMEI']] = [];
-  //   entriesIMEI[entry['IMEI']].push(entry);
-  // });
+  entriesResults.forEach((entry) => {
+    if (typeof entriesIMEI[entry['IMEI']] === 'undefined')
+      entriesIMEI[entry['IMEI']] = [];
+    entriesIMEI[entry['IMEI']].push(entry);
+  });
 
   selectTransactionsSQL = `SELECT tlt.IMEI,
                                   rut.MIN,
@@ -222,12 +222,7 @@ async function verifyMissing(req, res, sql) {
             if (entry_print_series > collect_print_series) {
               //if not found, push to remainingToSearch to search in Transact
               //push to rawData noData for now for checking
-              if (!Array.isArray(rawData.results.noData[current_collect_IMEI]))
-                rawData.results.noData[current_collect_IMEI] = [];
-              rawData.results.noData[current_collect_IMEI].push(
-                collect_print_series,
-              );
-              // remainingToSearch.push(collect_print_series);
+              remainingToSearch.push(collect_print_series);
               break;
             }
             //if found in entries, push to found in entries in rawData
@@ -293,6 +288,14 @@ async function verifyMissing(req, res, sql) {
         }
       },
     );
+
+    //if there are contents in remainingToSearch[], check in transactions
+    if (
+      remainingToSearch.length > 0 &&
+      Array.isArray(transactionIMEI[current_collect_IMEI])
+    ) {
+      console.log(remainingToSearch.length);
+    }
   }
 
   // console.log('ENTRIES DATA IMEIs');
