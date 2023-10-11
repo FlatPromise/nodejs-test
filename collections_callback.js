@@ -1,4 +1,3 @@
-const { json } = require('express');
 const fetch = require('node-fetch');
 
 async function getCollections(req, res, sql) {
@@ -189,21 +188,21 @@ async function verifyMissing(req, res, sql) {
                              AND tlt.datetime LIKE '${req.params.targetDate}%'
                              AND tlt.print_series > 0
                             ORDER BY rut.MIN, tlt.print_series`;
-  const transactionResults = await new Promise((resolve, reject) => {
-    sql.query(selectTransactionsSQL, (err, rows, fields) => {
-      if (err) reject(err);
-      resolve(rows);
-    });
-  });
+  // const transactionResults = await new Promise((resolve, reject) => {
+  //   sql.query(selectTransactionsSQL, (err, rows, fields) => {
+  //     if (err) reject(err);
+  //     resolve(rows);
+  //   });
+  // });
 
-  let transactionIMEI = {};
-  transactionResults.forEach((transact) => {
-    if (typeof transactionIMEI[transact['IMEI']] === 'undefined')
-      transactionIMEI[transact['IMEI']] = [];
-    transactionIMEI[transact['IMEI']].push(transact);
-  });
+  // let transactionIMEI = {};
+  // transactionResults.forEach((transact) => {
+  //   if (typeof transactionIMEI[transact['IMEI']] === 'undefined')
+  //     transactionIMEI[transact['IMEI']] = [];
+  //   transactionIMEI[transact['IMEI']].push(transact);
+  // });
 
-  let jsonResult = {
+  let rawData = {
     targetDate: req.params.targetDate,
     results: { inTransact: {}, inEntries: {}, noData: {} },
   };
@@ -213,30 +212,37 @@ async function verifyMissing(req, res, sql) {
     receivedMissing.results[current_collect_IMEI].forEach(
       (collect_print_series) => {
         // if entries[] exists, search there first.
+
+        let remainingToSearch = [];
         if (Array.isArray(entriesIMEI[current_collect_IMEI])) {
-          let remainingToSearch = [];
-
-          entriesIMEI[current_collect_IMEI].forEach((entry) => {
-            let entry_print_series = entry['print_series'];
-
-            if (entry_print_series > collect_print_series)
-              remainingToSearch.push(collect_print_series);
-
-            if (entry_print_series === collect_print_series) {
-              // if array doesn't exist yet, create an array first then push
-              if (
-                !Array.isArray(
-                  jsonResult.results.inEntries[current_collect_IMEI],
-                )
-              ) {
-                jsonResult.results.inEntries[current_collect_IMEI] = [];
-              }
-              // then push here
-              jsonResult.results.inEntries[current_collect_IMEI].push(
+          //check if found in entries
+          for (let i = 0; i <= entriesIMEI[current_collect_IMEI].length; i++) {
+            let entry_print_series =
+              entriesIMEI[current_collect_IMEI][i].print_series;
+            if (entry_print_series > collect_print_series) {
+              //if not found, push to remainingToSearch to search in Transact
+              //push to jsonResults noData for now for checking
+              if (!Array.isArray(rawData.results.noData[current_collect_IMEI]))
+                rawData.results.noData[current_collect_IMEI] = [];
+              rawData.results.noData[current_collect_IMEI].push(
                 collect_print_series,
               );
+              // remainingToSearch.push(collect_print_series);
+              break;
             }
-          });
+            //if found in entries, push to found in entries in jsonResult
+            if (entry_print_series === collect_print_series) {
+              // create array in jsonResult according to IMEI and push there
+              if (
+                !Array.isArray(rawData.results.inEntries[current_collect_IMEI])
+              )
+                rawData.results.inEntries[current_collect_IMEI] = [];
+              rawData.results.inEntries[current_collect_IMEI].push(
+                collect_print_series,
+              );
+              break;
+            }
+          }
         } else {
           // check if transacts[] exists
           // and search in transacts[] immediately if it doesn't exist.
@@ -251,7 +257,7 @@ async function verifyMissing(req, res, sql) {
   // for (const current_IMEI in entriesIMEI) {
   //   console.log(`${current_IMEI}/${collectResults[current_IMEI]}`);
   // }
-  res.send('A-OK');
+  res.send(JSON.stringify(rawData));
 }
 
 module.exports = {
