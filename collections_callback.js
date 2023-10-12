@@ -325,7 +325,7 @@ async function verifyMissing(req, res, sql) {
       });
     }
   }
-  res.send(JSON.stringify(rawData));
+  res.send(JSON.stringify(consolidateKeys(rawData)));
 }
 
 function consecutivelyGroupItems(imeiArray) {
