@@ -355,25 +355,34 @@ function consolidateKeys(rawDataJSON) {
   for (const key in jsonResultsEntries) {
     if (!Array.isArray(returnData.results.inEntries[key]))
       returnData.results.inEntries[key] = [];
-    returnData.results.inEntries[key] = consecutivelyGroupItems(
-      jsonResultsEntries[key],
-    );
+    let toConsolidate = consecutivelyGroupItems(jsonResultsEntries[key]);
+    let toPush = [];
+    toConsolidate.forEach((innerArray) => {
+      toPush.push([innerArray[0], innerArray[innerArray.length - 1]]);
+    });
+    returnData.results.inEntries[key] = toPush;
   }
 
   for (const key in jsonResultsTransact) {
     if (!Array.isArray(returnData.results.inTransact[key]))
       returnData.results.inTransact[key] = [];
-    returnData.results.inTransact[key] = consecutivelyGroupItems(
-      jsonResultsTransact[key],
-    );
+    let toConsolidate = consecutivelyGroupItems(jsonResultsTransact[key]);
+    let toPush = [];
+    toConsolidate.forEach((innerArray) => {
+      toPush.push([innerArray[0], innerArray[innerArray.length - 1]]);
+    });
+    returnData.results.inTransact[key] = toPush;
   }
 
   for (const key in jsonResultsNoData) {
     if (!Array.isArray(returnData.results.noData[key]))
       returnData.results.noData[key] = [];
-    returnData.results.noData[key] = consecutivelyGroupItems(
-      jsonResultsNoData[key],
-    );
+    let toConsolidate = consecutivelyGroupItems(jsonResultsNoData[key]);
+    let toPush = [];
+    toConsolidate.forEach((innerArray) => {
+      toPush.push([innerArray[0], innerArray[innerArray.length - 1]]);
+    });
+    returnData.results.noData[key] = toPush;
   }
 
   return returnData;
