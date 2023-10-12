@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fs = require('node:fs');
 const express = require('express');
 const mysql = require('mysql');
 const entries_callback = require('./entries_callback');
@@ -31,6 +31,10 @@ app.get('/api/collections/:targetDate/missing/verify', (req, res) => {
 
 app.get('/api/entries/:targetDate', (req, res) => {
   entries_callback.getEntries(req, res, connection);
+});
+
+app.get('/test', (req, res) => {
+  res.send('this is a test get');
 });
 
 app.get('/api/entries/:targetDate/missing', (req, res) => {
