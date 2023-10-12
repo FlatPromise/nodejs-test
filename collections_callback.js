@@ -328,6 +328,57 @@ async function verifyMissing(req, res, sql) {
   res.send(JSON.stringify(rawData));
 }
 
+function consecutivelyGroupItems(imeiArray) {
+  const result = imeiArray.reduce((r, n) => {
+    const lastSubArray = r[r.length - 1];
+
+    if (!lastSubArray || lastSubArray[lastSubArray.length - 1] !== n - 1) {
+      r.push([]);
+    }
+
+    r[r.length - 1].push(n);
+
+    return r;
+  }, []);
+  return result;
+}
+
+function consolidateKeys(rawDataJSON) {
+  let jsonResultsEntries = rawDataJSON.results.inEntries;
+  let jsonResultsTransact = rawDataJSON.results.inTransact;
+  let jsonResultsNoData = rawDataJSON.results.noData;
+  let returnData = {
+    targetDate: rawDataJSON.targetDate,
+    results: { inTransact: {}, inEntries: {}, noData: {} },
+  };
+
+  for (const key in jsonResultsEntries) {
+    if (!Array.isArray(returnData.results.inEntries[key]))
+      returnData.results.inEntries[key] = [];
+    returnData.results.inEntries[key] = consecutivelyGroupItems(
+      jsonResultsEntries[key],
+    );
+  }
+
+  for (const key in jsonResultsTransact) {
+    if (!Array.isArray(returnData.results.inTransact[key]))
+      returnData.results.inTransact[key] = [];
+    returnData.results.inTransact[key] = consecutivelyGroupItems(
+      jsonResultsTransact[key],
+    );
+  }
+
+  for (const key in jsonResultsNoData) {
+    if (!Array.isArray(returnData.results.noData[key]))
+      returnData.results.noData[key] = [];
+    returnData.results.noData[key] = consecutivelyGroupItems(
+      jsonResultsNoData[key],
+    );
+  }
+
+  return returnData;
+}
+
 module.exports = {
   getCollections,
   getMissing,
