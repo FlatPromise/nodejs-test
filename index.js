@@ -33,12 +33,16 @@ app.get('/api/entries/:targetDate', (req, res) => {
   entries_callback.getEntries(req, res, connection);
 });
 
-app.get('/test', (req, res) => {
-  res.send('this is a test get');
-});
-
 app.get('/api/entries/:targetDate/missing', (req, res) => {
   entries_callback.getMissing(req, res);
+});
+
+app.get('/api/entries/:targetDate/missing/verify', (req, res) => {
+  res.send('Hello World');
+});
+
+app.get('/test', (req, res) => {
+  res.send('this is a test get');
 });
 
 app.get('/', (req, res) => {
