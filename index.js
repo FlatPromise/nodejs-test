@@ -38,7 +38,7 @@ app.get('/api/entries/:targetDate/missing', (req, res) => {
 });
 
 app.get('/api/entries/:targetDate/missing/verify', (req, res) => {
-  res.send('Hello World');
+  entries_callback.verifyMissing(req, res, connection);
 });
 
 app.get('/test', (req, res) => {
