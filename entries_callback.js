@@ -2,7 +2,8 @@ async function getEntries(req, res, sql) {
   let jsonResult = { results: {} };
   jsonResult.targetDate = req.params.targetDate;
 
-  if (/\d{4}-\d{2}/.test(req.params.targetDate)) {
+  const regexCheck = new RegExp('/d{4}-d{2}/A');
+  if (regexCheck.test(req.params.targetDate)) {
     let sqlQuery = `SELECT MIN,
                            plate_no,
                            ticket_type,
@@ -92,7 +93,21 @@ async function getMissing(req, res) {
   res.send(JSON.stringify(jsonResult));
 }
 
+async function verifyMissing(req, res, sql) {
+  const response = await fetch(
+    `http://${req.headers.host}/api/collections/${req.params.targetDate}/missing`,
+  );
+  const receivedMissing = await response.json();
+
+  if (receivedMissing.hasOwnProperty('error')) {
+    return res.send(JSON.stringify(receivedMissing));
+  }
+
+  res.send(JSON.stringify(receivedMissing));
+}
+
 module.exports = {
   getEntries,
   getMissing,
+  verifyMissing,
 };
