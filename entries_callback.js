@@ -102,7 +102,32 @@ async function verifyMissing(req, res, sql) {
     return res.send(JSON.stringify(receivedMissing));
   }
 
-  res.send(JSON.stringify(receivedMissing));
+  let selectEntriesSQL = `SELECT DISTINCT et.MIN,
+                                          rut.IMEI
+                          FROM entries_tb et
+                          LEFT JOIN ref_units_tb rut ON rut.MIN = et.MIN
+                          WHERE start_date LIKE '${req.params.targetDate}%'
+                           AND print_series > 0
+                          ORDER BY et.MIN`;
+  const entriesResults = await new Promise((resolve, reject) => {
+    sql.query(selectEntriesSQL, async (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(
+        await new Promise((resolve, reject) => {
+          let refUnitsTbl = {};
+          rows.forEach((element) => {
+            refUnitsTbl[element['MIN']] = element['IMEI'];
+          });
+          resolve(refUnitsTbl);
+        }),
+      );
+    });
+  });
+
+  let inStringIMEI = Object.values(entriesResults).join(',');
+  let inStringMIN = Object.keys(entriesResults).join(',');
+
+  res.send('');
 }
 
 module.exports = {
