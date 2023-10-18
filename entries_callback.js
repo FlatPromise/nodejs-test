@@ -2,8 +2,7 @@ async function getEntries(req, res, sql) {
   let jsonResult = { results: {} };
   jsonResult.targetDate = req.params.targetDate;
 
-  const regexCheck = new RegExp('/d{4}-d{2}/A');
-  if (regexCheck.test(req.params.targetDate)) {
+  if (/^\d{4}-\d{2}$/.test(req.params.targetDate)) {
     let sqlQuery = `SELECT MIN,
                            plate_no,
                            ticket_type,

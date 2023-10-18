@@ -4,8 +4,7 @@ async function getCollections(req, res, sql) {
   let jsonResult = { results: {} };
   jsonResult.targetDate = req.params.targetDate;
 
-  const regexCheck = new RegExp('/d{4}-d{2}/A');
-  if (regexCheck.test(req.params.targetDate)) {
+  if (/^\d{4}-\d{2}$/.test(req.params.targetDate)) {
     let sqlQuery = `SELECT *
                       FROM collection_reports_tb 
                       WHERE entry_date LIKE '${req.params.targetDate}%' 
