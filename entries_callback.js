@@ -94,7 +94,7 @@ async function getMissing(req, res) {
 
 async function verifyMissing(req, res, sql) {
   const response = await fetch(
-    `http://${req.headers.host}/api/collections/${req.params.targetDate}/missing`,
+    `http://${req.headers.host}/api/entries/${req.params.targetDate}/missing`,
   );
   const receivedMissing = await response.json();
 
@@ -127,7 +127,189 @@ async function verifyMissing(req, res, sql) {
   let inStringIMEI = Object.values(entriesResults).join(',');
   let inStringMIN = Object.keys(entriesResults).join(',');
 
-  res.send('');
+  let selectCollectSQL = `SELECT rut.MIN,
+                                 crt.IMEI,
+                                 crt.print_series,
+                                 crt.entry_date,
+                                 crt.vatable_sales,
+                                 crt.vat_amount,
+                                 crt.vat_exempt,
+                                 rtt.zero_rated,
+                                 rtt.effective_from,
+                                 rtt.effective_to
+                          FROM collection_reports_tb crt
+                          LEFT JOIN ref_ticket_types_tb rtt ON rtt.ticket_id = crt.ticket_id
+                          LEFT JOIN ref_units_tb rut ON rut.IMEI = crt.IMEI
+                          WHERE crt.IMEI IN (${inStringIMEI})
+                           AND crt.entry_date LIKE '${req.params.targetDate}%'
+                           AND crt.print_series > 0
+                          ORDER BY rut.MIN, crt.print_series`;
+  const collectResults = await new Promise((resolve, reject) => {
+    sql.query(selectCollectSQL, (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
+
+  let collectMIN = {};
+  collectResults.forEach((collect) => {
+    if (typeof collectMIN[collect['MIN']] === 'undefined')
+      collectMIN[collect['MIN']] = [];
+    collectMIN[collect['MIN']].push(collect);
+  });
+
+  let selectTransactionsSQL = `SELECT tlt.IMEI,
+                                      rut.MIN,
+                                      tlt.print_series,
+                                      tlt.datetime,
+                                      rtt.total_amount,
+                                      rtt.vatable_sales,
+                                      rtt.vat_amount,
+                                      rtt.vat_exempt,
+                                      rtt.zero_rated,
+                                      rtt.effective_from,
+                                      rtt.effective_to
+                              FROM transaction_logs_tb tlt
+                              LEFT JOIN ref_ticket_types_tb rtt ON rtt.ticket_id = tlt.ticket_type
+                              LEFT JOIN ref_units_tb rut ON rut.IMEI = tlt.IMEI
+                              WHERE rut.MIN IN (${inStringMIN})
+                               AND tlt.datetime LIKE '${req.params.targetDate}%'
+                               AND tlt.print_series > 0
+                              ORDER BY rut.MIN, tlt.print_series`;
+  const transactionResults = await new Promise((resolve, reject) => {
+    sql.query(selectTransactionsSQL, (err, rows, fields) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
+
+  let transactionMIN = {};
+  transactionResults.forEach((transact) => {
+    if (typeof transactionMIN[transact['IMEI']] === 'undefined')
+      transactionMIN[transact['MIN']] = [];
+    transactionMIN[transact['MIN']].push(transact);
+  });
+
+  let rawData = {
+    targetDate: req.params.targetDate,
+    results: { inTransact: {}, inEntries: {}, noData: {} },
+  };
+
+  for (const current_entries_min in receivedMissing.results) {
+    let remainingToSearch = [];
+
+    receivedMissing.results[current_entries_min].forEach(
+      (entries_print_series) => {
+        if (Array.isArray(collectMIN[current_entries_min])) {
+          for (let i = 0; i <= collectMIN[current_entries_min].length; i++) {
+            let collect_print_series =
+              collectMIN[current_entries_min][i].print_series;
+            console.log('a');
+            if (collect_print_series > entries_print_series) {
+              remainingToSearch.push(collect_print_series);
+              break;
+            }
+            if (collect_print_series === entries_print_series) {
+              if (
+                !Array.isArray(rawData.results.inEntries[current_entries_min])
+              )
+                rawData.results.inEntries[current_entries_min] = [];
+              rawData.results.inEntries[current_collect_IMEI].push(
+                collect_print_series,
+              );
+              break;
+            }
+          }
+        } else {
+          if (Array.isArray(transactionMIN[current_entries_min])) {
+            for (
+              let i = 0;
+              i <= transactionMIN[current_entries_min].length;
+              i++
+            ) {
+              let transaction_print_series =
+                transactionMIN[current_entries_min][i].print_series;
+
+              if (transaction_print_series > entries_print_series) {
+                if (!Array.isArray(rawData.results.noData[current_entries_min]))
+                  rawData.results.noData[current_entries_min] = [];
+                rawData.results.noData[current_entries_min].push(
+                  entries_print_series,
+                );
+                break;
+              }
+
+              if (transaction_print_series === entries_print_series) {
+                if (
+                  !Array.isArray(
+                    rawData.results.inTransact[current_entries_min],
+                  )
+                )
+                  rawData.results.inTransact[current_entries_min] = [];
+                rawData.results.inTransact[current_entries_min].push(
+                  entries_print_series,
+                );
+                break;
+              }
+            }
+          }
+        }
+
+        // if (
+        //   remainingToSearch.length > 0 &&
+        //   Array.isArray(transactionMIN[current_entries_min])
+        // ) {
+        //   remainingToSearch.forEach((entries_print_series) => {
+        //     if (Array.isArray(transactionMIN[current_entries_min])) {
+        //       for (
+        //         let i = 0;
+        //         i <= transactionMIN[current_entries_min].length;
+        //         i++
+        //       ) {
+        //         if (Array.isArray(transactionMIN[current_entries_min])) {
+        //           for (
+        //             let i = 0;
+        //             i <= transactionMIN[current_entries_min].length;
+        //             i++
+        //           ) {
+        //             let transaction_print_series =
+        //               transactionMIN[current_entries_min][i].print_series;
+
+        //             if (transaction_print_series > entries_print_series) {
+        //               if (
+        //                 !Array.isArray(
+        //                   rawData.results.noData[current_entries_min],
+        //                 )
+        //               )
+        //                 rawData.results.noData[current_entries_min] = [];
+        //               rawData.results.noData[current_entries_min].push(
+        //                 entries_print_series,
+        //               );
+        //               break;
+        //             }
+
+        //             if (transaction_print_series === entries_print_series) {
+        //               if (
+        //                 !Array.isArray(
+        //                   rawData.results.inTransact[current_entries_min],
+        //                 )
+        //               )
+        //                 rawData.results.inTransact[current_entries_min] = [];
+        //               rawData.results.inTransact[current_entries_min].push(
+        //                 entries_print_series,
+        //               );
+        //               break;
+        //             }
+        //           }
+        //         }
+        //       }
+        //     }
+        //   });
+        // }
+      },
+    );
+  }
+  res.send(JSON.stringify(rawData));
 }
 
 module.exports = {
