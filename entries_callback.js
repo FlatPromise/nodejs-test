@@ -198,10 +198,131 @@ async function verifyMissing(req, res, sql) {
   for (const current_entries_min in receivedMissing.results) {
     let remainingToSearch = [];
     receivedMissing.results[current_entries_min].forEach(
-      (entries_print_series) => {},
+      (entry_print_series) => {
+        //
+
+        if (Array.isArray(collectMIN[current_entries_min])) {
+          //check if found in entries
+
+          let i = 0;
+          // + 1 in length to include last element
+          while (collectMIN[current_entries_min].length >= i) {
+            let collect_print_series =
+              collectMIN[current_entries_min][i].print_series;
+            i++;
+            if (collect_print_series > entry_print_series) {
+              remainingToSearch.push(collect_print_series);
+              break;
+            }
+
+            if (entry_print_series === collect_print_series) {
+              if (
+                !Array.isArray(rawData.results.inEntries[current_entries_min])
+              )
+                rawData.results.inEntries[current_entries_min] = [];
+              rawData.results.inEntries[current_entries_min].push(
+                entry_print_series,
+              );
+              break;
+            }
+          }
+        } else {
+          // check if transacts[] exists
+          if (Array.isArray(transactionMIN[current_entries_min])) {
+            let i = 0;
+            while (transactionMIN[current_entries_min].length >= i) {
+              let transaction_print_series =
+                transactionMIN[current_entries_min][i].print_series;
+              i++;
+
+              if (transaction_print_series > entry_print_series) {
+                //if not found, data missing
+                if (!Array.isArray(rawData.results.noData[current_entries_min]))
+                  rawData.results.noData[current_entries_min] = [];
+                rawData.results.noData[current_entries_min].push(
+                  entry_print_series,
+                );
+                break;
+              }
+
+              //if found in transaction, push to found in transaction in rawData
+              if (transaction_print_series === entry_print_series) {
+                // create array in rawData according to MIN and push there
+                if (
+                  !Array.isArray(
+                    rawData.results.inTransact[current_entries_min],
+                  )
+                )
+                  rawData.results.inTransact[current_entries_min] = [];
+                rawData.results.inTransact[current_entries_min].push(
+                  entry_print_series,
+                );
+                break;
+              }
+            }
+          }
+          // if it doesn't exist, all items are missing
+          else {
+            if (!Array.isArray(rawData.results.noData[current_entries_min]))
+              rawData.results.noData[current_entries_min] = [];
+            rawData.results.noData[current_entries_min].push(
+              entry_print_series,
+            );
+          }
+        }
+      },
     );
+
+    //if there are contents in remainingToSearch[], check in transactions
+    if (
+      remainingToSearch.length > 0 &&
+      Array.isArray(transactionMIN[current_entries_min])
+    ) {
+      remainingToSearch.forEach((entry_print_series) => {
+        if (Array.isArray(transactionMIN[current_entries_min])) {
+          let i = 0;
+          while (transactionMIN[current_entries_min].length >= i) {
+            let transaction_print_series =
+              transactionMIN[current_entries_min][i].print_series;
+            i++;
+
+            if (transaction_print_series > entry_print_series) {
+              //if not found, data missing
+              if (!Array.isArray(rawData.results.noData[current_entries_min]))
+                rawData.results.noData[current_entries_min] = [];
+              rawData.results.noData[current_entries_min].push(
+                entry_print_series,
+              );
+              break;
+            }
+
+            //if found in transaction, push to found in transaction in rawData
+            if (transaction_print_series === entry_print_series) {
+              // create array in rawData according to MIN and push there
+              if (
+                !Array.isArray(rawData.results.inTransact[current_entries_min])
+              )
+                rawData.results.inTransact[current_entries_min] = [];
+              rawData.results.inTransact[current_entries_min].push(
+                entry_print_series,
+              );
+              break;
+            }
+          }
+        }
+      });
+    }
+    //else, all remaining to search are missing
+    else {
+      remainingToSearch.forEach((entry_print_series) => {
+        //due to the nature of the foreach, will iterate this every time
+        if (!Array.isArray(rawData.results.noData[current_entries_min]))
+          rawData.results.noData[current_entries_min] = [];
+        rawData.results.noData[current_entries_min].push(entry_print_series);
+      });
+    }
+    res.send(JSON.stringify(rawData));
   }
-  res.send(JSON.stringify(rawData));
 }
 
 module.exports = {
