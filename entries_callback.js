@@ -321,8 +321,8 @@ async function verifyMissing(req, res, sql) {
         rawData.results.noData[current_entries_min].push(entry_print_series);
       });
     }
-    res.send(JSON.stringify(rawData));
   }
+  res.send(JSON.stringify(rawData));
 }
 
 module.exports = {
