@@ -198,7 +198,14 @@ async function verifyMissing(req, res, sql) {
   for (const current_entries_min in receivedMissing.results) {
     let remainingToSearch = [];
     receivedMissing.results[current_entries_min].forEach(
-      (collect_print_series) => {},
+      (collect_print_series) => {
+        // if entries[] exists, search there first.
+        if (Array.isArray(collectMIN[current_entries_min])) {
+          //check if found in entries
+        } else {
+          // check if transacts[] exists
+        }
+      },
     );
   }
   res.send(JSON.stringify(rawData));
