@@ -33,6 +33,19 @@ app.get('/api/entries/:targetDate', (req, res) => {
   entries_callback.getEntries(req, res, connection);
 });
 
+app.get('/calculate-hours', (req, res) => {
+  const receivedJSON = JSON.parse(
+    fs.readFileSync('php_controllers_to_reference/rendered-hours.json', {
+      encoding: 'utf-8',
+    }),
+  );
+  let sum = 0;
+  receivedJSON['Hours'].forEach((element) => {
+    sum += element;
+  });
+  res.send(String(sum));
+});
+
 app.get('/api/entries/:targetDate/missing', (req, res) => {
   entries_callback.getMissing(req, res);
 });
